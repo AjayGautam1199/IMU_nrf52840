@@ -1,0 +1,7 @@
+default: EMG_BETTR
+build_dir: /Users/ajaygautam/Work_folder/Documents/FW_Bettr/EMG_BETTR/build
+domains:
+  - name: EMG_BETTR
+    build_dir: /Users/ajaygautam/Work_folder/Documents/FW_Bettr/EMG_BETTR/build/EMG_BETTR
+flash_order:
+  - EMG_BETTR

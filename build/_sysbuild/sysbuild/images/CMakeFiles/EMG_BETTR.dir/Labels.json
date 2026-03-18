@@ -1,0 +1,43 @@
+{
+	"sources" : 
+	[
+		{
+			"file" : "/Users/ajaygautam/Work_folder/Documents/FW_Bettr/EMG_BETTR/build/_sysbuild/sysbuild/images/CMakeFiles/EMG_BETTR"
+		},
+		{
+			"file" : "/Users/ajaygautam/Work_folder/Documents/FW_Bettr/EMG_BETTR/build/_sysbuild/sysbuild/images/CMakeFiles/EMG_BETTR.rule"
+		},
+		{
+			"file" : "/Users/ajaygautam/Work_folder/Documents/FW_Bettr/EMG_BETTR/build/_sysbuild/sysbuild/images/CMakeFiles/EMG_BETTR-complete.rule"
+		},
+		{
+			"file" : "/Users/ajaygautam/Work_folder/Documents/FW_Bettr/EMG_BETTR/build/_sysbuild/sysbuild/images/EMG_BETTR-prefix/src/EMG_BETTR-stamp/EMG_BETTR-build.rule"
+		},
+		{
+			"file" : "/Users/ajaygautam/Work_folder/Documents/FW_Bettr/EMG_BETTR/build/_sysbuild/sysbuild/images/EMG_BETTR-prefix/src/EMG_BETTR-stamp/EMG_BETTR-configure.rule"
+		},
+		{
+			"file" : "/Users/ajaygautam/Work_folder/Documents/FW_Bettr/EMG_BETTR/build/_sysbuild/sysbuild/images/EMG_BETTR-prefix/src/EMG_BETTR-stamp/EMG_BETTR-download.rule"
+		},
+		{
+			"file" : "/Users/ajaygautam/Work_folder/Documents/FW_Bettr/EMG_BETTR/build/_sysbuild/sysbuild/images/EMG_BETTR-prefix/src/EMG_BETTR-stamp/EMG_BETTR-install.rule"
+		},
+		{
+			"file" : "/Users/ajaygautam/Work_folder/Documents/FW_Bettr/EMG_BETTR/build/_sysbuild/sysbuild/images/EMG_BETTR-prefix/src/EMG_BETTR-stamp/EMG_BETTR-mkdir.rule"
+		},
+		{
+			"file" : "/Users/ajaygautam/Work_folder/Documents/FW_Bettr/EMG_BETTR/build/_sysbuild/sysbuild/images/EMG_BETTR-prefix/src/EMG_BETTR-stamp/EMG_BETTR-patch.rule"
+		},
+		{
+			"file" : "/Users/ajaygautam/Work_folder/Documents/FW_Bettr/EMG_BETTR/build/_sysbuild/sysbuild/images/EMG_BETTR-prefix/src/EMG_BETTR-stamp/EMG_BETTR-update.rule"
+		}
+	],
+	"target" : 
+	{
+		"labels" : 
+		[
+			"EMG_BETTR"
+		],
+		"name" : "EMG_BETTR"
+	}
+}

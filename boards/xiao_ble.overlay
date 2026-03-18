@@ -1,0 +1,137 @@
+/*
+ * Copyright (c) 2026 BETTR. 
+ * Author : Ajay Gautam
+ */
+
+/ {
+    chosen {
+        zephyr,console = &uart0;
+        zephyr,shell-uart = &uart0;
+    };
+
+    aliases {
+        led0 = &led_red;
+        // led1 = &led_green;
+        // exg0 = &exg_power_ctrl;
+        // sw0 = &user_button;
+        // emgadc = &adc_channel_0;
+        // battadc = &adc_channel_4;
+        spi-flash0 = &p25q16h;
+    };
+    // zephyr,user {
+    //     emg-channel = <&adc_channel_0>;
+    //     batt-channel = <&adc_channel_4>;
+    // };
+    zephyr,user {
+        io-channels = <&adc 4>;
+        // io-channels = <&adc 0>, <&adc 4>;
+    };
+    leds {
+        compatible = "gpio-leds";
+        led_red: led_0 {
+            gpios = <&gpio0 26 GPIO_ACTIVE_HIGH>; //26
+            label = "User LED (Red)";
+        };
+        // led_green: led_1 {
+        //     gpios = <&gpio0 30 GPIO_ACTIVE_HIGH>;  //30
+        //     label = "Green LED";
+        // };
+        // led_blue: led_2 {
+        //     gpios = <&gpio0 6 GPIO_ACTIVE_HIGH>;
+        //     label = "Blue LED";
+        // };
+    };
+    
+    outputs {
+        compatible = "gpio-leds";
+        
+        // exg_power_ctrl: exg_power_ctrl {
+        //     /* P0.03 configured as Active High */
+        //     gpios = <&gpio0 3 GPIO_ACTIVE_HIGH>;
+        //     label = "EXG Power Control";
+        // };
+    };
+    
+    // Add button definition
+    // buttons {
+    //     compatible = "gpio-keys";
+    //     user_button: button_0 {
+    //         // gpios = <&gpio1 15 GPIO_ACTIVE_LOW>;
+    //         gpios = <&gpio1 15 (GPIO_ACTIVE_LOW | GPIO_PULL_UP)>;
+    //         label = "User Button";
+    //     };
+    // };
+};
+
+&adc {
+    status = "okay";
+    #address-cells = <1>;
+    #size-cells = <0>;
+        /*
+     * This is the critical fix. The nRF52840 SAADC is on IRQ line 7.
+     * We are explicitly setting its priority to 5, which is a safe, low
+     * priority that will not conflict with the Bluetooth stack.
+     */
+    // interrupts = <7 5>;
+ 
+    // adc_channel_0: channel@0 {
+    //     reg = <0>;
+    //     zephyr,gain = "ADC_GAIN_1_6";
+    //     zephyr,reference = "ADC_REF_INTERNAL"; /* Internal reference is 0.6V */
+    //     // zephyr,gain = <ADC_GAIN_1_6>;
+    //     // zephyr,reference = <ADC_REF_INTERNAL>; /* Internal reference is 0.6V */
+    //     zephyr,acquisition-time = <ADC_ACQ_TIME_DEFAULT>;
+    //     zephyr,input-positive = <NRF_SAADC_AIN0>; /* This is Pin P0.02 for EMG */
+    //     zephyr,resolution = <12>;
+    // };
+
+    adc_channel_4: channel@4 {
+        reg = <4>;
+        zephyr,gain = "ADC_GAIN_1_6";
+        zephyr,reference = "ADC_REF_INTERNAL"; /* Internal reference is 0.6V */
+        // zephyr,gain = <ADC_GAIN_1_6>;
+        // zephyr,reference = <ADC_REF_INTERNAL>; /* Internal reference is 0.6V */
+        zephyr,acquisition-time = <ADC_ACQ_TIME_DEFAULT>;
+        zephyr,input-positive = <NRF_SAADC_AIN4>; /* This is Pin P0.28 for Battery */
+        zephyr,resolution = <12>;
+    };
+};
+// &timer0 {
+//     status = "okay";
+// };
+&timer1 {
+    status = "okay";
+};
+
+&pinctrl {
+    i2c0_default: i2c0_default {
+        group1 {
+            psels = <NRF_PSEL(TWIM_SDA, 0, 4)>,  /* P0.04 = D4 = SDA */
+                    <NRF_PSEL(TWIM_SCL, 0, 5)>;   /* P0.05 = D5 = SCL */
+        };
+    };
+
+    i2c0_sleep: i2c0_sleep {
+        group1 {
+            psels = <NRF_PSEL(TWIM_SDA, 0, 4)>,
+                    <NRF_PSEL(TWIM_SCL, 0, 5)>;
+            low-power-enable;
+        };
+    };
+};
+
+/* I2C0 for MPU6500 IMU sensor */
+&i2c0 {
+    compatible = "nordic,nrf-twim";
+    status = "okay";
+    clock-frequency = <I2C_BITRATE_FAST>; /* 400kHz */
+    pinctrl-0 = <&i2c0_default>;
+    pinctrl-1 = <&i2c0_sleep>;
+    pinctrl-names = "default", "sleep";
+
+    mpu6500: mpu6500@68 {
+        compatible = "i2c-device";
+        reg = <0x68>;
+        label = "MPU6500";
+    };
+};

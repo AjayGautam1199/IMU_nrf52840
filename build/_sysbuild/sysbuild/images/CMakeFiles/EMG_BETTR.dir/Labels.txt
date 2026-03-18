@@ -1,0 +1,13 @@
+# Target labels
+ EMG_BETTR
+# Source files and their labels
+/Users/ajaygautam/Work_folder/Documents/FW_Bettr/EMG_BETTR/build/_sysbuild/sysbuild/images/CMakeFiles/EMG_BETTR
+/Users/ajaygautam/Work_folder/Documents/FW_Bettr/EMG_BETTR/build/_sysbuild/sysbuild/images/CMakeFiles/EMG_BETTR.rule
+/Users/ajaygautam/Work_folder/Documents/FW_Bettr/EMG_BETTR/build/_sysbuild/sysbuild/images/CMakeFiles/EMG_BETTR-complete.rule
+/Users/ajaygautam/Work_folder/Documents/FW_Bettr/EMG_BETTR/build/_sysbuild/sysbuild/images/EMG_BETTR-prefix/src/EMG_BETTR-stamp/EMG_BETTR-build.rule
+/Users/ajaygautam/Work_folder/Documents/FW_Bettr/EMG_BETTR/build/_sysbuild/sysbuild/images/EMG_BETTR-prefix/src/EMG_BETTR-stamp/EMG_BETTR-configure.rule
+/Users/ajaygautam/Work_folder/Documents/FW_Bettr/EMG_BETTR/build/_sysbuild/sysbuild/images/EMG_BETTR-prefix/src/EMG_BETTR-stamp/EMG_BETTR-download.rule
+/Users/ajaygautam/Work_folder/Documents/FW_Bettr/EMG_BETTR/build/_sysbuild/sysbuild/images/EMG_BETTR-prefix/src/EMG_BETTR-stamp/EMG_BETTR-install.rule
+/Users/ajaygautam/Work_folder/Documents/FW_Bettr/EMG_BETTR/build/_sysbuild/sysbuild/images/EMG_BETTR-prefix/src/EMG_BETTR-stamp/EMG_BETTR-mkdir.rule
+/Users/ajaygautam/Work_folder/Documents/FW_Bettr/EMG_BETTR/build/_sysbuild/sysbuild/images/EMG_BETTR-prefix/src/EMG_BETTR-stamp/EMG_BETTR-patch.rule
+/Users/ajaygautam/Work_folder/Documents/FW_Bettr/EMG_BETTR/build/_sysbuild/sysbuild/images/EMG_BETTR-prefix/src/EMG_BETTR-stamp/EMG_BETTR-update.rule

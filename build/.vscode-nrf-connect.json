@@ -1,0 +1,17 @@
+{
+  "toolchainPath": "/opt/nordic/ncs/toolchains/e5f4758bcf",
+  "sdkPath": "/opt/nordic/ncs/v3.2.2",
+  "board": "xiao_ble/nrf52840",
+  "boardDir": "/opt/nordic/ncs/v3.2.2/zephyr/boards/seeed/xiao_ble",
+  "boardDirs": [
+    "/opt/nordic/ncs/v3.2.2/zephyr/boards/seeed/xiao_ble"
+  ],
+  "optimizations": "none",
+  "cmakeArgs": [],
+  "confFiles": [],
+  "buildDirectory": "build",
+  "kconfigFragments": [],
+  "snippets": [],
+  "dtcOverlays": [],
+  "extraDtcOverlays": []
+}
