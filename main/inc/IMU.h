@@ -23,4 +23,14 @@ IMU_data_t imu_read(void);
  */
 void imu_task(void *p1, void *p2, void *p3);
 
+/**
+ * @brief Returns the total step count since boot (or last reset).
+ */
+uint16_t step_get_count(void);
+
+/**
+ * @brief Resets the step counter to zero.
+ */
+void step_reset(void);
+
 #endif // IMU_H

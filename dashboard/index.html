@@ -1,0 +1,654 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IMU Real-Time Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --bg-color: #0f0f0f;
+            --card-bg: #1a1a2e;
+            --card-border: #252540;
+            --text-color: #e0e0e0;
+            --text-muted: #888;
+            --accent-color: #03dac6;
+            --danger-color: #cf6679;
+            --record-color: #ff3b30;
+            --step-color: #ffb74d;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            padding: 16px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        /* --- Header --- */
+        .header {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            align-items: center;
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            padding: 16px 20px;
+            border-radius: 12px;
+            gap: 12px;
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .header-left h1 { font-size: 1.3rem; }
+
+        .controls {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        button {
+            background-color: var(--accent-color);
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            color: #000;
+            font-weight: 600;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: opacity 0.2s, transform 0.1s;
+        }
+        button:hover { opacity: 0.85; }
+        button:active { transform: scale(0.97); }
+        button:disabled { background-color: #333; color: #666; cursor: not-allowed; }
+
+        .btn-record { background-color: var(--text-color); }
+        .btn-stop { background-color: var(--danger-color); color: white; display: none; }
+        .btn-disconnect { background-color: #444; color: #ccc; display: none; }
+
+        select {
+            padding: 8px 12px;
+            border-radius: 6px;
+            background: #252540;
+            color: white;
+            border: 1px solid #444;
+            font-size: 0.85rem;
+        }
+
+        .status-badge {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+        .status-badge.connected { background-color: var(--accent-color); color: black; }
+        .status-badge.disconnected { background-color: #333; color: #999; }
+
+        .rec-indicator {
+            display: none;
+            align-items: center;
+            gap: 5px;
+            color: var(--record-color);
+            font-weight: bold;
+            font-size: 0.85rem;
+        }
+        .rec-dot {
+            width: 10px; height: 10px;
+            background-color: var(--record-color);
+            border-radius: 50%;
+            animation: pulse 1.5s infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.3; }
+        }
+
+        /* --- Stats Row --- */
+        .stats-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 12px;
+        }
+
+        .stat-card {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 12px;
+            padding: 16px 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .stat-label {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-muted);
+        }
+
+        .stat-value {
+            font-size: 1.8rem;
+            font-weight: 700;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .stat-unit {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            font-weight: 400;
+        }
+
+        .stat-card.steps .stat-value { color: var(--step-color); }
+        .stat-card.battery .stat-value { color: var(--accent-color); }
+        .stat-card.rate .stat-value { color: #bb86fc; }
+        .stat-card.activity .stat-value { color: #76ff03; }
+        .stat-card.activity .stat-value.running { color: #ff5252; }
+        .stat-card.activity .stat-value.idle { color: var(--text-muted); }
+
+        .step-reset-btn {
+            background: none;
+            border: 1px solid #444;
+            color: var(--text-muted);
+            padding: 2px 8px;
+            font-size: 0.7rem;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-left: 8px;
+        }
+        .step-reset-btn:hover { border-color: var(--step-color); color: var(--step-color); }
+
+        /* --- Battery Bar --- */
+        .battery-bar {
+            width: 100%;
+            height: 6px;
+            background: #333;
+            border-radius: 3px;
+            margin-top: 8px;
+            overflow: hidden;
+        }
+        .battery-bar-fill {
+            height: 100%;
+            background: var(--accent-color);
+            width: 0%;
+            transition: width 0.5s;
+            border-radius: 3px;
+        }
+
+        /* --- Charts --- */
+        .charts-wrapper {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+
+        .chart-card {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            padding: 16px;
+            border-radius: 12px;
+        }
+
+        .chart-card h2 {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+
+        /* --- Live Values Table --- */
+        .live-values {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+
+        .values-card {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 12px;
+            padding: 16px;
+        }
+
+        .values-card h2 {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            margin-bottom: 10px;
+            font-weight: 600;
+        }
+
+        .values-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+        }
+
+        .axis-value {
+            text-align: center;
+            padding: 8px;
+            border-radius: 8px;
+            background: rgba(255,255,255,0.03);
+        }
+
+        .axis-label {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 4px;
+        }
+
+        .axis-num {
+            font-size: 1.1rem;
+            font-weight: 700;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .axis-value.x .axis-label { color: #ff6384; }
+        .axis-value.y .axis-label { color: #36a2eb; }
+        .axis-value.z .axis-label { color: #4bc0c0; }
+        .axis-value.x .axis-num { color: #ff6384; }
+        .axis-value.y .axis-num { color: #36a2eb; }
+        .axis-value.z .axis-num { color: #4bc0c0; }
+
+        .gx .axis-label { color: #ff9f40; }
+        .gy .axis-label { color: #9966ff; }
+        .gz .axis-label { color: #ffcd56; }
+        .gx .axis-num { color: #ff9f40; }
+        .gy .axis-num { color: #9966ff; }
+        .gz .axis-num { color: #ffcd56; }
+
+        @media (max-width: 800px) {
+            .charts-wrapper, .live-values { grid-template-columns: 1fr; }
+            .stats-row { grid-template-columns: repeat(2, 1fr); }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+
+    <!-- Header -->
+    <div class="header">
+        <div class="header-left">
+            <h1>IMU Dashboard</h1>
+            <span id="connectionStatus" class="status-badge disconnected">Disconnected</span>
+            <div id="recIndicator" class="rec-indicator">
+                <div class="rec-dot"></div> REC
+            </div>
+        </div>
+        <div class="controls">
+            <button id="btnRec" class="btn-record" onclick="startRecording()" disabled>Record</button>
+            <button id="btnStop" class="btn-stop" onclick="stopRecording()">Stop Rec</button>
+            <button onclick="clearWaveforms()" style="background:#444;color:#ccc;">Clear Waveform</button>
+            <div style="width:1px;height:24px;background:#444;margin:0 4px;"></div>
+            <button id="btnScan" onclick="scanDevices()">Scan</button>
+            <select id="deviceSelect"><option>Select Device...</option></select>
+            <button id="btnConnect" onclick="connectDevice()" disabled>Connect</button>
+            <button id="btnDisconnect" class="btn-disconnect" onclick="disconnectDevice()">Disconnect</button>
+        </div>
+    </div>
+
+    <!-- Stats Row -->
+    <div class="stats-row">
+        <div class="stat-card steps">
+            <span class="stat-label">Steps
+                <button class="step-reset-btn" onclick="resetSteps()">Reset</button>
+            </span>
+            <span class="stat-value" id="stepCount">0</span>
+        </div>
+        <div class="stat-card battery">
+            <span class="stat-label">Battery</span>
+            <span class="stat-value" id="battText">--<span class="stat-unit">%</span></span>
+            <div class="battery-bar"><div id="battFill" class="battery-bar-fill"></div></div>
+        </div>
+        <div class="stat-card rate">
+            <span class="stat-label">Packet Rate</span>
+            <span class="stat-value" id="packetRate">0 <span class="stat-unit">Hz</span></span>
+        </div>
+        <div class="stat-card activity">
+            <span class="stat-label">Activity</span>
+            <span class="stat-value idle" id="activityValue">Idle</span>
+        </div>
+        <div class="stat-card">
+            <span class="stat-label">Timestamp</span>
+            <span class="stat-value" id="tsValue" style="font-size:1.2rem;color:var(--text-muted);">--</span>
+        </div>
+    </div>
+
+    <!-- Live Values -->
+    <div class="live-values">
+        <div class="values-card">
+            <h2>Accelerometer (g)</h2>
+            <div class="values-grid">
+                <div class="axis-value x">
+                    <div class="axis-label">X</div>
+                    <div class="axis-num" id="liveAx">0.00</div>
+                </div>
+                <div class="axis-value y">
+                    <div class="axis-label">Y</div>
+                    <div class="axis-num" id="liveAy">0.00</div>
+                </div>
+                <div class="axis-value z">
+                    <div class="axis-label">Z</div>
+                    <div class="axis-num" id="liveAz">0.00</div>
+                </div>
+            </div>
+        </div>
+        <div class="values-card">
+            <h2>Gyroscope (deg/s)</h2>
+            <div class="values-grid">
+                <div class="axis-value gx">
+                    <div class="axis-label">X</div>
+                    <div class="axis-num" id="liveGx">0.00</div>
+                </div>
+                <div class="axis-value gy">
+                    <div class="axis-label">Y</div>
+                    <div class="axis-num" id="liveGy">0.00</div>
+                </div>
+                <div class="axis-value gz">
+                    <div class="axis-label">Z</div>
+                    <div class="axis-num" id="liveGz">0.00</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Charts -->
+    <div class="charts-wrapper">
+        <div class="chart-card">
+            <h2>Accelerometer (g)</h2>
+            <canvas id="accChart"></canvas>
+        </div>
+        <div class="chart-card">
+            <h2>Gyroscope (deg/s)</h2>
+            <canvas id="gyroChart"></canvas>
+        </div>
+    </div>
+</div>
+
+<script>
+    // --- State ---
+    let ws;
+    const maxDataPoints = 150;
+    let packetCount = 0;
+    let lastRateUpdate = Date.now();
+
+    // --- Chart Setup ---
+    const chartDefaults = {
+        responsive: true,
+        animation: false,
+        interaction: { intersect: false, mode: 'index' },
+        scales: {
+            x: { display: false },
+            y: { grid: { color: '#252540' }, ticks: { color: '#666' } }
+        },
+        elements: { point: { radius: 0 }, line: { tension: 0.2 } },
+        plugins: { legend: { labels: { color: '#999', boxWidth: 12, padding: 16 } } }
+    };
+
+    const accChart = new Chart(document.getElementById('accChart'), {
+        type: 'line',
+        data: {
+            labels: [],
+            datasets: [
+                { label: 'X', borderColor: '#ff6384', borderWidth: 1.5, data: [] },
+                { label: 'Y', borderColor: '#36a2eb', borderWidth: 1.5, data: [] },
+                { label: 'Z', borderColor: '#4bc0c0', borderWidth: 1.5, data: [] }
+            ]
+        },
+        options: chartDefaults
+    });
+
+    const gyroChart = new Chart(document.getElementById('gyroChart'), {
+        type: 'line',
+        data: {
+            labels: [],
+            datasets: [
+                { label: 'X', borderColor: '#ff9f40', borderWidth: 1.5, data: [] },
+                { label: 'Y', borderColor: '#9966ff', borderWidth: 1.5, data: [] },
+                { label: 'Z', borderColor: '#ffcd56', borderWidth: 1.5, data: [] }
+            ]
+        },
+        options: chartDefaults
+    });
+
+    // --- Scan / Connect / Disconnect ---
+
+    async function scanDevices() {
+        const btn = document.getElementById('btnScan');
+        const select = document.getElementById('deviceSelect');
+        btn.textContent = "Scanning..."; btn.disabled = true;
+        select.innerHTML = "<option>Scanning...</option>";
+
+        try {
+            const res = await fetch('/scan');
+            const devices = await res.json();
+            select.innerHTML = "";
+            if (devices.length === 0) {
+                select.innerHTML = "<option>No devices found</option>";
+                return;
+            }
+            devices.forEach(dev => {
+                const opt = document.createElement("option");
+                opt.value = dev.address;
+                opt.textContent = `${dev.name} (${dev.address})`;
+                select.appendChild(opt);
+            });
+            document.getElementById('btnConnect').disabled = false;
+        } catch (e) {
+            console.error(e);
+            select.innerHTML = "<option>Scan failed</option>";
+        } finally {
+            btn.textContent = "Scan"; btn.disabled = false;
+        }
+    }
+
+    async function connectDevice() {
+        const address = document.getElementById('deviceSelect').value;
+        const badge = document.getElementById('connectionStatus');
+        const btnConnect = document.getElementById('btnConnect');
+
+        badge.textContent = "Connecting...";
+        badge.className = "status-badge";
+        btnConnect.disabled = true;
+
+        try {
+            const res = await fetch(`/connect/${address}`, { method: 'POST' });
+            const result = await res.json();
+
+            if (result.status === "connected") {
+                badge.textContent = "Connected";
+                badge.className = "status-badge connected";
+                updateBattery(result.battery);
+                document.getElementById('btnRec').disabled = false;
+                document.getElementById('btnDisconnect').style.display = "inline-block";
+                document.getElementById('btnConnect').style.display = "none";
+                document.getElementById('stepCount').textContent = "0";
+                startWebSocket();
+            }
+        } catch (e) {
+            console.error(e);
+            badge.textContent = "Failed";
+            badge.className = "status-badge disconnected";
+            btnConnect.disabled = false;
+        }
+    }
+
+    async function disconnectDevice() {
+        try {
+            await fetch('/disconnect', { method: 'POST' });
+        } catch (e) { console.error(e); }
+        handleDisconnect();
+    }
+
+    function handleDisconnect() {
+        document.getElementById('connectionStatus').textContent = "Disconnected";
+        document.getElementById('connectionStatus').className = "status-badge disconnected";
+        document.getElementById('btnConnect').style.display = "inline-block";
+        document.getElementById('btnConnect').disabled = false;
+        document.getElementById('btnDisconnect').style.display = "none";
+        document.getElementById('btnRec').disabled = true;
+        document.getElementById('recIndicator').style.display = "none";
+        document.getElementById('btnRec').style.display = "inline-block";
+        document.getElementById('btnStop').style.display = "none";
+    }
+
+    // --- Recording ---
+
+    async function startRecording() {
+        try {
+            const res = await fetch('/record/start', { method: 'POST' });
+            const data = await res.json();
+            if (data.status === "started") {
+                document.getElementById('btnRec').style.display = "none";
+                document.getElementById('btnStop').style.display = "inline-block";
+                document.getElementById('recIndicator').style.display = "flex";
+            }
+        } catch(e) { console.error("Rec start error", e); }
+    }
+
+    async function stopRecording() {
+        try {
+            const res = await fetch('/record/stop', { method: 'POST' });
+            const data = await res.json();
+            if (data.status === "stopped") {
+                document.getElementById('btnRec').style.display = "inline-block";
+                document.getElementById('btnStop').style.display = "none";
+                document.getElementById('recIndicator').style.display = "none";
+            }
+        } catch(e) { console.error("Rec stop error", e); }
+    }
+
+    // --- Step Reset ---
+
+    async function resetSteps() {
+        try {
+            await fetch('/steps/reset', { method: 'POST' });
+            document.getElementById('stepCount').textContent = "0";
+        } catch(e) { console.error(e); }
+    }
+
+    // --- Helpers ---
+
+    function updateBattery(level) {
+        const fill = document.getElementById('battFill');
+        const text = document.getElementById('battText');
+        if (level < 0) {
+            text.innerHTML = 'N/A';
+            fill.style.width = "0%";
+        } else {
+            text.innerHTML = level + '<span class="stat-unit">%</span>';
+            fill.style.width = level + "%";
+            fill.style.background = level < 20 ? "var(--danger-color)" : "var(--accent-color)";
+        }
+    }
+
+    function updatePacketRate() {
+        const now = Date.now();
+        const elapsed = (now - lastRateUpdate) / 1000;
+        if (elapsed >= 1.0) {
+            const rate = Math.round(packetCount / elapsed);
+            document.getElementById('packetRate').innerHTML =
+                rate + ' <span class="stat-unit">Hz</span>';
+            packetCount = 0;
+            lastRateUpdate = now;
+        }
+    }
+
+    // --- Activity ---
+
+    function updateActivity(walkRun) {
+        const el = document.getElementById('activityValue');
+        if (walkRun === 2) {
+            el.textContent = "Running";
+            el.className = "stat-value running";
+        } else if (walkRun === 1) {
+            el.textContent = "Walking";
+            el.className = "stat-value";
+        } else {
+            el.textContent = "Idle";
+            el.className = "stat-value idle";
+        }
+    }
+
+    // --- Clear Waveforms ---
+
+    function clearWaveforms() {
+        accChart.data.labels = [];
+        accChart.data.datasets.forEach(ds => ds.data = []);
+        accChart.update('none');
+
+        gyroChart.data.labels = [];
+        gyroChart.data.datasets.forEach(ds => ds.data = []);
+        gyroChart.update('none');
+    }
+
+    // --- WebSocket ---
+
+    function startWebSocket() {
+        if (ws) ws.close();
+        ws = new WebSocket(`ws://${window.location.host}/ws`);
+
+        ws.onmessage = (event) => {
+            const p = JSON.parse(event.data);
+            packetCount++;
+            updatePacketRate();
+
+            // Update step count & activity
+            document.getElementById('stepCount').textContent = p.steps;
+            updateActivity(p.walk_run);
+
+            // Update timestamp
+            document.getElementById('tsValue').textContent = p.time + ' ms';
+
+            // Update live values
+            document.getElementById('liveAx').textContent = p.ax.toFixed(2);
+            document.getElementById('liveAy').textContent = p.ay.toFixed(2);
+            document.getElementById('liveAz').textContent = p.az.toFixed(2);
+            document.getElementById('liveGx').textContent = p.gx.toFixed(1);
+            document.getElementById('liveGy').textContent = p.gy.toFixed(1);
+            document.getElementById('liveGz').textContent = p.gz.toFixed(1);
+
+            // Update charts
+            accChart.data.labels.push(p.time);
+            gyroChart.data.labels.push(p.time);
+
+            accChart.data.datasets[0].data.push(p.ax);
+            accChart.data.datasets[1].data.push(p.ay);
+            accChart.data.datasets[2].data.push(p.az);
+
+            gyroChart.data.datasets[0].data.push(p.gx);
+            gyroChart.data.datasets[1].data.push(p.gy);
+            gyroChart.data.datasets[2].data.push(p.gz);
+
+            if (accChart.data.labels.length > maxDataPoints) {
+                accChart.data.labels.shift();
+                accChart.data.datasets.forEach(ds => ds.data.shift());
+                gyroChart.data.labels.shift();
+                gyroChart.data.datasets.forEach(ds => ds.data.shift());
+            }
+
+            accChart.update('none');
+            gyroChart.update('none');
+        };
+
+        ws.onclose = () => handleDisconnect();
+    }
+</script>
+</body>
+</html>

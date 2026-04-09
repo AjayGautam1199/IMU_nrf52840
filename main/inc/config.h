@@ -37,6 +37,8 @@ struct __attribute__((packed)) IMUData
 {
     int16_t accel[3]; // Acceleration x,y,z (scaled x100 or raw)
     int16_t gyro[3];  // Gyro x,y,z (scaled x100 or raw)
+    int8_t Step;
+    int8_t WalkingVsRunning;
 };
 typedef struct IMUData IMU_data_t;
 
